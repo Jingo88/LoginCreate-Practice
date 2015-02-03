@@ -16,9 +16,11 @@ app.get('/', function(req,res){
 	res.sendFile(__dirname + '/index.html');
 });
 
-app.get('/secret_page', function(req,res){
-	res.sendFile(__dirname + '/secret.html');
-});
+//instead of using this to refresh the page we can send over some content for something else. 
+//look at the functions below the login GET
+// app.get('/secret_page', function(req,res){
+// 	res.sendFile(__dirname + '/secret.html');
+// });
 
 //We are using req.query.password because we are using form with a GET
 //If it was a post function we would be using req.body to grab the information
@@ -26,6 +28,7 @@ app.get('/secret_page', function(req,res){
 //inside the hash.
 
 app.get('/login', function(req,res){
+	console.log(req.query)
 	if (req.query.password === secret.password){
 		res.redirect('/secret_page');
 	} else {
@@ -33,5 +36,28 @@ app.get('/login', function(req,res){
 	};
 });
 
+app.get('/secret_page', function(req,res){
+	res.send('Hello! <a href="/secret_page2"> Secret Page 2 </a>');
+});
+
+app.get('/secret_page2', function(req,res){
+	res.send("Hello Again! <a href='/secret_page'> Back to Secret Page 1 </a>")
+})
+
 app.listen(3000);
-console.log("you are on 3000")
+console.log("you are on 3000");
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
