@@ -5,6 +5,9 @@ var ejs = require('ejs');
 var bodyParser = require('body-parser');
 var fs = require('fs');
 var session = require('express-session');
+var sqlite3 = require('sqlite3').verbose();
+var db = new sqlite3.Database('authentication.db');
+var bcrypt = require ('bcrypt');
 
 app.use(express.static('public'));
 
@@ -15,7 +18,7 @@ app.use(bodyParser.urlencoded({extended: false}));
 var secret = require('./secret.json');
 
 app.use(session({
-  secret: secret.password,
+  secret: "string",
   resave: false,
   saveUninitialized: true
 }));
@@ -36,13 +39,46 @@ app.get('/', function(req,res){
 //now the if statement is (secret.password) because we are looking into the file to grab the password
 //inside the hash.
 
-app.post('/session', function(req,res){
-	if (req.body.password === secret.password){
-		req.session.valid_user = true;
-		res.redirect('/secret_page');
+app.post('/user', function(req,res){
+	var username = req.body.newName;
+	var password = req.body.newPassword;
+	console.log(username);
+	console.log(password);
+
+	if (req.body.newPassword === req.body.confirmPass){
+		var hash = bcrypt.hashSync(password, 8);
+		// Now the password is the hash you have created
+		db.run('INSERT INTO users(username, password) VALUES (?, ?)', username, hash, function(err){
+			if(err) { throw err;}
+
+		});
+		res.redirect('/');
 	} else {
-		res.redirect('/')
-	};
+		res.redirect('/');
+	}
+});
+
+app.post('/session', function(req,res){
+	var username = req.body.username;
+	var password = req.body.password;
+	console.log("your username is " + username);
+	console.log("your password is " + password);
+	console.log("you are now in session post");
+
+	db.get('SELECT * FROM users WHERE username = ?', username, function(err, row){
+		if(err) {throw err;}
+		
+			if(row) {
+				var passwordMatches = bcrypt.compareSync(password, row.password);
+				console.log(passwordMatches)
+				if (passwordMatches) { 
+					req.session.valid_user = true;
+					res.redirect('/secret_page');	
+				}
+		} else {
+			res.redirect('/');	
+		}
+	});
 });
 
 app.get('/secret_page', function(req,res){
